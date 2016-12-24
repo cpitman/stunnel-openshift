@@ -1,4 +1,4 @@
-FROM rhel7
+FROM centos
 
 RUN yum install -y stunnel openssl sed && yum clean all && \
     mkdir -p /etc/stunnel/config /etc/stunnel/pki
