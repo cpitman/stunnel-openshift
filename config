@@ -1,0 +1,8 @@
+foreground = yes
+sslVersion = TLSv1.2
+
+[service]
+accept = 5000
+connect = 5001
+cert = /etc/stunnel/pki/cert.pem
+key = /etc/stunnel/pki/key.pem
