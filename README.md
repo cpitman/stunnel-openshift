@@ -41,11 +41,11 @@ pid =
 
 [service]
 accept=5002
-connect=stunnel-stunnel-2.rhel-cdk.10.1.2.2.xip.io:443
+connect=stunnel-demo.rhel-cdk.10.1.2.2.xip.io:443
 verify=0
 ```
 
-This configuration tells stunnel to act as a client, to list locally on port 
+This configuration tells stunnel to act as a client, to listen locally on port 
 `5002`, to forward all traffic received on that port to 
 `stunnel-demo.rhel-cdk.10.1.2.2.xip.io:443` (replace with your stunnel route), 
 and for this demo turns off validation of the server's cert since we are 
