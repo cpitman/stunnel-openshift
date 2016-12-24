@@ -8,7 +8,7 @@ ADD launch.sh /launch.sh
 
 RUN chown -R 1001:0 /etc/stunnel /launch.sh && \
     chmod -R g+rw /etc/stunnel && \
-    chmod g+rwx /launch.sh
+    chmod ug+rwx /launch.sh
     
 USER 1001
 
