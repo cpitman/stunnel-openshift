@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel7:latest
+FROM rhel7
 
 RUN yum install -y stunnel openssl sed && yum clean all && \
     mkdir -p /etc/stunnel/config /etc/stunnel/pki
