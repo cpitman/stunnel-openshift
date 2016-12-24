@@ -1,4 +1,5 @@
 foreground = yes
+pid = /etc/stunnel/pid
 sslVersion = TLSv1.2
 
 [service]
