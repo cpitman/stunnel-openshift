@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: stunnel-example
+objects:
+  -
+    apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: stunnel
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: 'stunnel:latest'
+      runPolicy: Serial
+      source:
+        git:
+          uri: 'https://github.com/cpitman/stunnel-openshift.git'
+        type: Git
+      strategy:
+        dockerStrategy:
+          from:
+            kind: ImageStreamTag
+            name: 'centos:latest'
+        type: Docker
+      triggers:
+        -
+          type: ConfigChange
+        -
+          imageChange:
+          type: ImageChange
+  -
+    apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: tcpecho
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: 'tcpecho:latest'
+      runPolicy: Serial
+      source:
+        git:
+          uri: 'https://github.com/cpitman/tcpecho-openshift.git'
+        type: Git
+      strategy:
+        dockerStrategy:
+          from:
+            kind: ImageStreamTag
+            name: 'centos:latest'
+        type: Docker
+      triggers:
+        -
+          type: ConfigChange
+        -
+          imageChange:
+          type: ImageChange
+  -
+    apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: centos
+    spec:
+      tags:
+        -
+          from:
+            kind: DockerImage
+            name: 'centos:latest'
+          importPolicy:
+          name: latest
+  -
+    apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: stunnel
+    spec:
+      tags:
+        -
+          name: latest
+  -
+    apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: tcpecho
+    spec:
+      tags:
+        -
+          name: latest
+  -
+    apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: stunnel
+    spec:
+      replicas: 1
+      selector:
+        app: stunnel
+        deploymentconfig: stunnel
+      strategy:
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: stunnel
+            deploymentconfig: stunnel
+        spec:
+          containers:
+            -
+              imagePullPolicy: Always
+              livenessProbe: {failureThreshold: 3, initialDelaySeconds: 1, periodSeconds: 10, successThreshold: 1, tcpSocket: {port: 5000}, timeoutSeconds: 1}
+              name: stunnel
+              ports: [{containerPort: 5000, protocol: TCP}]
+              readinessProbe: {failureThreshold: 3, initialDelaySeconds: 1, periodSeconds: 10, successThreshold: 1, tcpSocket: {port: 5000}, timeoutSeconds: 1}
+            -
+              imagePullPolicy: Always
+              livenessProbe: {failureThreshold: 3, initialDelaySeconds: 1, periodSeconds: 10, successThreshold: 1, tcpSocket: {port: 5001}, timeoutSeconds: 1}
+              name: tcpecho
+              ports: [{containerPort: 5001, protocol: TCP}]
+              readinessProbe: {failureThreshold: 3, initialDelaySeconds: 1, periodSeconds: 10, successThreshold: 1, tcpSocket: {port: 5001}, timeoutSeconds: 1}
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        -
+          type: ConfigChange
+        -
+          imageChangeParams:
+            automatic: true
+            containerNames:
+              - stunnel
+            from:
+              kind: ImageStreamTag
+              name: 'stunnel:latest'
+          type: ImageChange
+        -
+          imageChangeParams:
+            automatic: true
+            containerNames:
+              - tcpecho
+            from:
+              kind: ImageStreamTag
+              name: 'tcpecho:latest'
+          type: ImageChange
+  -
+    apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: stunnel
+      name: stunnel
+    spec:
+      port:
+        targetPort: 5000-tcp
+      tls:
+        termination: passthrough
+      to:
+        kind: Service
+        name: stunnel
+        weight: 100
+  -
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: stunnel
+      name: stunnel
+    spec:
+      ports:
+        -
+          name: 5000-tcp
+          port: 5000
+          protocol: TCP
+          targetPort: 5000
+      selector:
+        deploymentconfig: stunnel
+      sessionAffinity: None
+      type: ClusterIP
